@@ -293,7 +293,7 @@ void myGaussianBlur_(const Mat& src, Mat& dst, Size kerSize, double sigmaX, doub
 	assert(dstsize == srcsize);
 	Mat filBuff(hh, ww, CV_8UC3);
 	Mat dstBuff(hh, w, CV_32FC3);
-	const int threadNum = 8;
+	const int threadNum = 4;
 	for(int y = radiusY; y < hh - radiusY; y++) {
 		Vec3b * bufPtr = filBuff.ptr<Vec3b>(y) + radiusX;
 		const Vec3b * srcPtr = src.ptr<Vec3b>(y - radiusY);
@@ -882,8 +882,6 @@ int main(int argc, char * argv[])
 	if( !img.data )
 		return -1;
 
-	resize(img, img, Size(5120, 5120));
-
 	cout << img.size() << "\n";
 
 	cout << img.type() << "\n";
@@ -895,7 +893,7 @@ int main(int argc, char * argv[])
 	beg = clock();
 	double t;
 	t = omp_get_wtime();
-	GaussianBlur(img, dst, Size(101, 101), 1, 1, BORDER_REPLICATE);
+	GaussianBlur(img, dst, Size(11, 11), 1, 1, BORDER_REPLICATE);
 //	dst = dst - img;
 	t = omp_get_wtime() - t;
 	end = clock();
@@ -905,7 +903,7 @@ int main(int argc, char * argv[])
 	beg = clock();
 	t = omp_get_wtime();
 	Mat dst1(img.size(), img.type());
-	myGaussianBlur_(img, dst1, Size(101, 101), 1, 1);
+	myGaussianBlur_(img, dst1, Size(11, 11), 1, 1);
 //	dst1 -= img;
 	t = omp_get_wtime() - t;
 	end = clock();
