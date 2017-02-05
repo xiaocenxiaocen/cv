@@ -1,5 +1,5 @@
 /* @file: gaussian_kernel.cu
- * @author: Zhang Xiao
+ * @author: xiaocenxiaocen
  * @date: 2017.01.13
  */
 #include <cstdio>
