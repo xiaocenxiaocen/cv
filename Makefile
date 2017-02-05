@@ -35,7 +35,10 @@ get_gpu_info: get_gpu_info.o
 get_gpu_info.o: get_gpu_info.cpp
 	$(NVCC) $(INCLUDES) $(CFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-gauss_blur: gaussian_blur.o
+gaussian_blur_filter.o: gaussian_blur_filter.cu
+	$(NVCC) $(INCLUDES) $(CFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+
+gauss_blur: gaussian_blur_filter.o gaussian_blur.o
 	$(CXX) -o $@ -fopenmp $+ $(LDFLAGS) $(LIBRARIES)
 
 .cpp.o:

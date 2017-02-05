@@ -15,6 +15,8 @@
 #include <emmintrin.h>	// SSE2
 #include <immintrin.h>	// AVX
 
+#include "gaussian_blur_filter.cuh"
+
 using namespace cv; // all the new API is put into "cv" namespace. Export its content
 using namespace std;
 
@@ -304,13 +306,14 @@ void myGaussianBlur_(const Mat& src, Mat& dst, Size kerSize, double sigmaX, doub
 
 int main(int argc, char * argv[])
 {
-	if(argc != 3) {
-		fprintf(stdout, "Usage: inputfile outputfile\n");
+	if(argc != 4) {
+		fprintf(stdout, "Usage: inputfile outputfile1 outputfile2\n");
 		return -1;
 	}
 
 	const char * imagename = argv[1];
-	const char * outputimage = argv[2];
+	const char * outputimage1 = argv[2];
+	const char * outputimage2 = argv[3];
 	Mat img = imread(imagename);
 	if(img.empty()) {
 		fprintf(stderr, "ERROR: cannot load image %s\n", imagename);
@@ -347,9 +350,31 @@ int main(int argc, char * argv[])
 	end = clock();
 	cout << "clock cycles of myGaussianBlur(): " << static_cast<float>(end - beg) << "\n";
 	cout << "elapsed time of myGaussianBlur(): " << t << "s\n";
-	imwrite(outputimage, dst1);
+	imwrite(outputimage1, dst1);
 
 	imwrite("error.jpg", dst1 - dst);
+
+	// warmup
+	uchar * h_src = reinterpret_cast<uchar*>(&((img.ptr<Vec3b>(0))[0][0]));
+	uchar * h_dst = reinterpret_cast<uchar*>(&((dst1.ptr<Vec3b>(0))[0][0]));
+	int w = img.cols;
+	int h = img.rows;
+	int cn = img.channels();
+	myGaussianBlur_gpu(h_src, h_dst, w, h, 11, 11, 1, 1, cn);
+
+	beg = clock();
+	t = omp_get_wtime();
+	Mat dst2(img.size(), img.type());
+	h_src = reinterpret_cast<uchar*>(&((img.ptr<Vec3b>(0))[0][0]));
+	h_dst = reinterpret_cast<uchar*>(&((dst2.ptr<Vec3b>(0))[0][0]));
+	myGaussianBlur_gpu(h_src, h_dst, w, h, 11, 11, 1, 1, cn);
+	t = omp_get_wtime() - t;
+	end = clock();
+	cout << "clock cycles of myGaussianBlur_gpu(): " << static_cast<float>(end - beg) << "\n";
+	cout << "elapsed time of myGaussianBlur_gpu(): " << t << "s\n";
+	imwrite(outputimage2, dst2);
+
+	imwrite("error2.jpg", dst2 - dst);
 
 	cout << dst.size() << "\n";
 
